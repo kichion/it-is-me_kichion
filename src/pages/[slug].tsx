@@ -2,7 +2,6 @@ import type { NextPage, InferGetStaticPropsType, GetStaticPaths } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import ErrorPage from "next/error";
-import styles from "../styles/Home.module.css";
 import { buildClient, IPostFields } from "../lib/contentful";
 import { EntryCollection } from "contentful";
 import { documentToReactComponents } from "@contentful/rich-text-react-renderer";
@@ -43,11 +42,11 @@ const Post: NextPage<Props> = ({ posts }) => {
   }
   const post = posts[0];
   return (
-    <div className={styles.container}>
+    <div>
       <Head>
         <title>{post.fields.title}</title>
       </Head>
-      <main>
+      <main className="prose dark:prose-invert lg:prose-xl">
         <h1>{post.fields.title}</h1>
         <div>{documentToReactComponents(post.fields.content)}</div>
       </main>
