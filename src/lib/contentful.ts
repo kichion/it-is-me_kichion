@@ -7,6 +7,7 @@ export interface IPostFields {
   title: string;
   slug: string;
   content: Document;
+  createdAt: Date;
 }
 
 export interface IPost extends Entry<IPostFields> {
