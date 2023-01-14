@@ -1,9 +1,14 @@
-import type { NextPage, InferGetStaticPropsType, GetStaticPaths } from "next";
+import type {
+  NextPage,
+  InferGetStaticPropsType,
+  GetStaticPaths,
+  GetStaticProps,
+} from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import ErrorPage from "next/error";
 import { buildClient, IPostFields } from "../lib/contentful";
-import { EntryCollection } from "contentful";
+import { Entry, EntryCollection } from "contentful";
 import {
   documentToReactComponents,
   Options,
@@ -12,16 +17,13 @@ import { BLOCKS, MARKS } from "@contentful/rich-text-types";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { materialDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import { ReactNode } from "react";
-const getPostEntries = async () => {
+import { ParsedUrlQuery } from "querystring";
+
+export const getStaticPaths: GetStaticPaths = async () => {
   const client = buildClient();
   const { items }: EntryCollection<IPostFields> = await client.getEntries({
     content_type: "post",
   });
-  return items;
-};
-
-export const getStaticPaths: GetStaticPaths = async () => {
-  const items = await getPostEntries();
   return {
     paths: items.map((item) => ({
       params: { slug: item.fields.slug },
@@ -30,23 +32,34 @@ export const getStaticPaths: GetStaticPaths = async () => {
   };
 };
 
-export const getStaticProps = async () => {
-  const items = await getPostEntries();
+export const getStaticProps: GetStaticProps<Props, Params> = async ({
+  params,
+}) => {
+  const client = buildClient();
+  const { items }: EntryCollection<IPostFields> = await client.getEntries({
+    content_type: "post",
+    "fields.slug": params?.slug,
+  });
   return {
     props: {
-      posts: items,
+      post: items[0],
     },
   };
 };
 
-type Props = InferGetStaticPropsType<typeof getStaticProps>;
+interface Params extends ParsedUrlQuery {
+  slug: string;
+}
 
-const Post: NextPage<Props> = ({ posts }) => {
+type Props = {
+  post: Entry<IPostFields>;
+};
+
+const Post: NextPage<Props> = ({ post }) => {
   const { isFallback } = useRouter();
-  if (!isFallback && !posts[0].fields.slug) {
+  if (!isFallback && !post.fields.slug) {
     return <ErrorPage statusCode={404} />;
   }
-  const post = posts[0];
   const Code = ({ children }: { children: ReactNode }) => (
     <div>
       <pre className="my-0 py-0 lg:my-0 lg:py-0">
@@ -58,7 +71,6 @@ const Post: NextPage<Props> = ({ posts }) => {
     renderNode: {
       // コードブロックをdivで括る
       [BLOCKS.PARAGRAPH]: (node, children) => {
-        console.info(node);
         const n = node.content[0];
         if (
           node.content.length === 1 &&
@@ -79,7 +91,6 @@ const Post: NextPage<Props> = ({ posts }) => {
         const startingLineNumber = parseInt(
           langConfig.length > 1 ? langConfig[1] : "1"
         );
-        console.info(node);
         return (
           <SyntaxHighlighter
             language={langConfig[0]}
