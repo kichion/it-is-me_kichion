@@ -10,7 +10,7 @@ import {
 } from "@contentful/rich-text-react-renderer";
 import { BLOCKS, MARKS } from "@contentful/rich-text-types";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { okaidia } from "react-syntax-highlighter/dist/cjs/styles/prism";
+import { materialDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import { ReactNode } from "react";
 const getPostEntries = async () => {
   const client = buildClient();
@@ -49,7 +49,7 @@ const Post: NextPage<Props> = ({ posts }) => {
   const post = posts[0];
   const Code = ({ children }: { children: ReactNode }) => (
     <div>
-      <pre>
+      <pre className="my-0 py-0 lg:my-0 lg:py-0">
         <code>{children}</code>
       </pre>
     </div>
@@ -72,10 +72,22 @@ const Post: NextPage<Props> = ({ posts }) => {
     },
     renderMark: {
       [MARKS.CODE]: (node: ReactNode) => {
+        // NOTE: using code block (first line is config => {language}:{startingLineNumber}).
+        //       showLineNumbers is false if startingLineNumber is 0
         const texts = (node as string).split("\n");
+        const langConfig = texts[0].split(":");
+        const startingLineNumber = parseInt(
+          langConfig.length > 1 ? langConfig[1] : "1"
+        );
         console.info(node);
         return (
-          <SyntaxHighlighter language={texts[0]} style={okaidia}>
+          <SyntaxHighlighter
+            language={langConfig[0]}
+            style={materialDark}
+            materialDark={startingLineNumber > 0}
+            startingLineNumber={startingLineNumber}
+            wrapLongLines
+          >
             {texts.slice(1)}
           </SyntaxHighlighter>
         );
@@ -87,7 +99,7 @@ const Post: NextPage<Props> = ({ posts }) => {
       <Head>
         <title>{post.fields.title}</title>
       </Head>
-      <main className="prose dark:prose-invert lg:prose-xl">
+      <main className="prose max-w-none dark:prose-invert lg:prose-lg">
         <h1>{post.fields.title}</h1>
         <div>{documentToReactComponents(post.fields.content, options)}</div>
       </main>
