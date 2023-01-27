@@ -1,19 +1,24 @@
 import { documentToReactComponents } from "@contentful/rich-text-react-renderer";
-import { BLOCKS, MARKS } from "@contentful/rich-text-types";
+import { BLOCKS, MARKS, INLINES } from "@contentful/rich-text-types";
 import markdownStyles from "./markdown-styles.module.css";
 import RichTextAsset from "./rich-text-asset";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { materialDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
 
-const Code = ({ children }) => (
-  <div>
-    <pre className="my-0 py-0 lg:my-0 lg:py-0">
-      <code>{children}</code>
-    </pre>
-  </div>
-);
 const customMarkdownOptions = (content) => ({
   renderNode: {
+    [INLINES.HYPERLINK]: (node, children) => {
+      return (
+        <a
+          href={node.data.uri}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline text-blue-600 hover:text-blue-800 visited:text-purple-600"
+        >
+          {children}
+        </a>
+      );
+    },
     [BLOCKS.EMBEDDED_ASSET]: (node) => (
       <RichTextAsset
         id={node.data.target.sys.id}
@@ -28,9 +33,24 @@ const customMarkdownOptions = (content) => ({
         n.nodeType === "text" &&
         n.marks.find((x) => x.type === "code")
       ) {
-        return <Code>{children}</Code>;
+        return (
+          <div>
+            <pre className="my-0 py-0 lg:my-0 lg:py-0">
+              <code>{children}</code>
+            </pre>
+          </div>
+        );
       }
       return <p>{children}</p>;
+    },
+    [BLOCKS.UL_LIST]: (node) => {
+      return (
+        <ul className="list-disc pl-8">
+          {node.content.map((c, i) => {
+            return <li key={i}>{c.content[0].content[0].value}</li>;
+          })}
+        </ul>
+      );
     },
   },
   renderMark: {
