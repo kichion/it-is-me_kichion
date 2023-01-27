@@ -1,11 +1,26 @@
-import Image from 'next/image'
+import Image from "next/image";
 
 export default function RichTextAsset({ id, assets }) {
-  const asset = assets?.find((asset) => asset.sys.id === id)
+  const asset = assets?.find((asset) => asset.sys.id === id);
 
   if (asset?.url) {
-    return <Image src={asset.url} layout="fill" alt={asset.description} />
+    // NOTE: どうにかしてwidth / heightを充てたい
+    return (
+      <div>
+        <Image
+          loader={CMSLoader}
+          src={asset.url}
+          width={400}
+          height={400}
+          alt={asset.description}
+        />
+      </div>
+    );
   }
 
-  return null
+  return null;
 }
+
+const CMSLoader = ({ src, width, quality }) => {
+  return src;
+};
